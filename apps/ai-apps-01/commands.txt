@@ -1,0 +1,5 @@
+# Pull the main chat model
+ollama pull phi4-mini
+
+# Pull the embedding model (used later for RAG)
+ollama pull all-minilm
