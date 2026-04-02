@@ -21,8 +21,14 @@ class Program
         using var host = builder.Build();
 
         var aiService = host.Services.GetRequiredService<IAiService>();
-        // aiService.RunFirstSampel().Wait();
-        aiService.SimpleChatApp().Wait();
 
+
+        // aiService.RunFirstSampel().Wait();
+        //  aiService.SimpleChatApp().Wait();
+        // aiService.SimpleChatAppWithStreamiing().Wait();
+       // aiService.SimpleStracturedOutput().Wait();
+       // aiService.SimpleStracturedOutputWithMultipleItems().Wait();
+       // aiService.ComplexStracturedOutput().Wait();
+       aiService.ActionItemSample().Wait();
     }
 }
