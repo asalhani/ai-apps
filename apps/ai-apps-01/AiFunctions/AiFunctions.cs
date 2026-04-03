@@ -33,7 +33,7 @@ public class AiFunctions
     public static string ConvertCurrency(
         [Description("The amount of money to convert. Must be greater than zero.")] double amount,
         [Description("The source currency code, for example USD, EUR, GBP, or JPY.")] string fromCurrency,
-        [Description("The target currency code, for example USD, EUR, GBP, or JPY.")] string toCurrency)
+        [Description("The target currency code, for example USD, EUR, GBP, or JPY.")] string toCurrency)    
     {
         if(amount <= 0)
             throw new ArgumentException("amount must be greater than zero");

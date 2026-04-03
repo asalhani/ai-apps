@@ -163,7 +163,7 @@ public class AiService : IAiService
 
         chatHistory.Add(new(ChatRole.System,
             "You are a function-only assistant. You must answer only by using the available functions. Do not invent facts, calculations, or results on your own.\n\nRules:\n- If no available function can solve the user's request, return a clear error message.\n- Use `ConvertCurrency` whenever currency conversion is needed.\n- Use `CalculateTip` whenever a tip must be calculated.\n- If a tip request involves an amount not in USD, first call `ConvertCurrency` to convert it to USD, then call `CalculateTip` with the converted amount.\n- If the amount is already in USD, call `CalculateTip` directly.\n- If multiple functions are needed, call them in the correct order and use the previous result as input to the next function."));
-        
+
         var chatOptions = new ChatOptions
         {
             Tools =
@@ -174,9 +174,14 @@ public class AiService : IAiService
             ]
         };
 
-        var chatClient = _chatClient.AsBuilder()
+        var functionInvokingClient = _chatClient
+            .AsBuilder()
             .UseFunctionInvocation()
-            .Build();
+            .Build() as FunctionInvokingChatClient;
+
+        functionInvokingClient.IncludeDetailedErrors = true;
+        // Important: rethrow immediately instead of letting the loop keep retrying
+        functionInvokingClient.MaximumConsecutiveErrorsPerRequest = 0;
 
         Console.WriteLine("Start asking your question...");
         Console.WriteLine("To exist the chat, press enter without any text..");
@@ -187,14 +192,21 @@ public class AiService : IAiService
 
             if (string.IsNullOrEmpty(userInput))
                 break;
-            
-            chatHistory.Add(new ChatMessage(ChatRole.User,  userInput));
 
-            var response = await chatClient.GetResponseAsync(chatHistory, chatOptions);
-            
-            chatHistory.Add(new (ChatRole.Assistant, response.Text));
-            
-            Console.WriteLine(response.Text);
+            chatHistory.Add(new ChatMessage(ChatRole.User, userInput));
+
+            try
+            {
+                var response = await functionInvokingClient.GetResponseAsync(chatHistory, chatOptions);
+                chatHistory.Add(new(ChatRole.Assistant, response.Text));
+
+                Console.WriteLine(response.Text);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("=== TOOL EXCEPTION ===");
+                Console.WriteLine(ex.ToString()); // includes stack trace
+            }
         }
     }
 }
