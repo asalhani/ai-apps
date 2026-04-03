@@ -111,7 +111,8 @@ public class AiService : IAiService
 
     public async Task SimpleStracturedOutputWithMultipleItems()
     {
-        string[] reviews = [
+        string[] reviews =
+        [
             "Best purchase ever!",
             "Returned it immediately.",
             "Hello",
@@ -121,9 +122,9 @@ public class AiService : IAiService
 
         foreach (var review in reviews)
         {
-            var response = await _chatClient.GetResponseAsync<Sentiment>($"What is the Sentiment of this review? {review}");
+            var response =
+                await _chatClient.GetResponseAsync<Sentiment>($"What is the Sentiment of this review? {review}");
             Console.WriteLine($"Review: {review} | Sentiment: {response.Result}");
-
         }
     }
 
@@ -131,7 +132,7 @@ public class AiService : IAiService
     {
         var review = "This is bullshit product";
         var response = await _chatClient.GetResponseAsync<SentimentAnalysis>($"Analyze this review: {review}");
-        
+
         Console.WriteLine($"Text: {response.Result.ResponseText}");
         Console.WriteLine($"Sentiment: {response.Result.ReviewSentiment}");
         Console.WriteLine($"Confidence: {response.Result.ConfidenceScore}");
@@ -145,12 +146,55 @@ public class AiService : IAiService
     Sarah needs to review the marketing plan next week (medium priority).
     Team should update documentation ongoing (low priority).
 ";
-        
-        var response  = await _chatClient.GetResponseAsync<List<ActionItem>>($"Extract all the action items from the following meeting note: {meetingNotes}");
-        
-        response.Result?.ForEach( actionItem =>
+
+        var response =
+            await _chatClient.GetResponseAsync<List<ActionItem>>(
+                $"Extract all the action items from the following meeting note: {meetingNotes}");
+
+        response.Result?.ForEach(actionItem =>
         {
             Console.WriteLine($" - {actionItem.Task} | {actionItem.Assignee} | {actionItem.Priority}");
         });
+    }
+
+    public async Task FunctionSample()
+    {
+        var chatHistory = new List<ChatMessage>();
+
+        chatHistory.Add(new(ChatRole.System,
+            "You are a function-only assistant. You must answer only by using the available functions. Do not invent facts, calculations, or results on your own.\n\nRules:\n- If no available function can solve the user's request, return a clear error message.\n- Use `ConvertCurrency` whenever currency conversion is needed.\n- Use `CalculateTip` whenever a tip must be calculated.\n- If a tip request involves an amount not in USD, first call `ConvertCurrency` to convert it to USD, then call `CalculateTip` with the converted amount.\n- If the amount is already in USD, call `CalculateTip` directly.\n- If multiple functions are needed, call them in the correct order and use the previous result as input to the next function."));
+        
+        var chatOptions = new ChatOptions
+        {
+            Tools =
+            [
+                AIFunctionFactory.Create(AiFunctions.CalculateTip),
+                AIFunctionFactory.Create(AiFunctions.ConvertCurrency),
+                AIFunctionFactory.Create(AiFunctions.GetCurrentTime)
+            ]
+        };
+
+        var chatClient = _chatClient.AsBuilder()
+            .UseFunctionInvocation()
+            .Build();
+
+        Console.WriteLine("Start asking your question...");
+        Console.WriteLine("To exist the chat, press enter without any text..");
+
+        while (true)
+        {
+            var userInput = Console.ReadLine();
+
+            if (string.IsNullOrEmpty(userInput))
+                break;
+            
+            chatHistory.Add(new ChatMessage(ChatRole.User,  userInput));
+
+            var response = await chatClient.GetResponseAsync(chatHistory, chatOptions);
+            
+            chatHistory.Add(new (ChatRole.Assistant, response.Text));
+            
+            Console.WriteLine(response.Text);
+        }
     }
 }

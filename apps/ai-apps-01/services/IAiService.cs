@@ -1,7 +1,7 @@
 namespace ai_apps_01.services;
 
 public interface IAiService
-{
+{             
     public Task RunFirstSampel();
 
     // without using streaming --> not good, in long answer user just look for a black screen.
@@ -16,4 +16,6 @@ public interface IAiService
     public Task ComplexStracturedOutput();
 
     public Task ActionItemSample();
+    
+    public Task FunctionSample();
 }

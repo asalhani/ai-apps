@@ -15,7 +15,7 @@ class Program
         builder.Services.AddSingleton<IChatClient>(_ =>
             new OllamaApiClient(
                 new Uri("http://localhost:11434"),
-                "phi4-mini"));
+                "llama3.2"));
 
         builder.Services.AddScoped<IAiService, AiService>();
         using var host = builder.Build();
@@ -29,6 +29,7 @@ class Program
        // aiService.SimpleStracturedOutput().Wait();
        // aiService.SimpleStracturedOutputWithMultipleItems().Wait();
        // aiService.ComplexStracturedOutput().Wait();
-       aiService.ActionItemSample().Wait();
+       // aiService.ActionItemSample().Wait();
+       aiService.FunctionSample().Wait();
     }
 }
